@@ -1,0 +1,14 @@
+start at: Fri Feb 02 10:30:25 CST 2018
+successfully create data/Series_64_20000.z.txt.idx_dyn_100_1
+fileName = data/Series_64_20000.z.txt
+tsLength = 64
+threshold = 100
+indexPath = data/Series_64_20000.z.txt.idx_dyn_100_1
+segmentSize = 1
+writing idx fileName...data/Series_64_20000.z.txt.idx_dyn_100_1/root.idx
+reading idx fileName...data/Series_64_20000.z.txt.idx_dyn_100_1/root.idx
+IndexFile Size = 0M
+FileBufferManager.getInstance().ioRead = 0
+FileBufferManager.getInstance().ioWrite = 360
+FileBufferManager.getInstance().ioDelete = 0
+Build the index successfully!!! at:Fri Feb 02 10:30:26 CST 2018
