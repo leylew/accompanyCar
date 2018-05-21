@@ -18,7 +18,7 @@ public class MeanIntervalUtils {
      * Precise d to 0.5*10^(-x+1).
      * For example: x=1 -> d=0.5, x=2 -> d=0.05, etc.
      */
-    public static int posOfD = 2;
+    public static int posOfD = 3;
 
     /**
      * Round float number to half integer. d = 0.5

@@ -83,7 +83,7 @@ public class TimeSeriesFileOperator implements TimeSeriesOperator {
     @Override
     public Double TsNormED(List<Double> tss, List<Double> queryData, double alpha, double beta) {
         Double dist = 0.0;
-        int tsLen = tss.size();
+        int tsLen = queryData.size();
         double ext = 0.0;
         double ex2t = 0.0;
         double exq = 0.0;
@@ -106,6 +106,7 @@ public class TimeSeriesFileOperator implements TimeSeriesOperator {
         for(int i =0; i < tsLen; i++){
             dist += (((tss.get(i) - ext) / ex2t) - ((queryData.get(i) - exq) / ex2q)) * (((tss.get(i) - ext) / ex2t) - ((queryData.get(i) - exq) / ex2q));
         }
+        //System.out.println(Math.sqrt(dist));
         return Math.sqrt(dist);
     }
 

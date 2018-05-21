@@ -118,6 +118,7 @@ public class NormQueryEngine {
     public boolean query(int offset, int length, int window, int level, double epsilon, double alpha, double beta) throws IOException {
         // fetch corresponding subsequence from data series
         List<Double> queryData = timeSeriesOperator.readTimeSeries(offset, length);
+        System.out.println(queryData);
         System.out.println("query data size "+window);
         return query(queryData, offset, offset + length - 1, window, level, epsilon, alpha, beta);
     }
@@ -136,6 +137,8 @@ public class NormQueryEngine {
         }
         double meanQ = ex / queryLength;
         double stdQ = Math.sqrt(ex2 / queryLength - meanQ * meanQ);
+        System.out.println("mean stdQ: "  + meanQ + " " + stdQ);
+
         List<QuerySegment> queries = splitQuerySeries(queryData, ts, te, window);
 
         // Phase 1: index-probing
