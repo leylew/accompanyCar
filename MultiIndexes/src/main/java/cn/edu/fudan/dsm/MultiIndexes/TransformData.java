@@ -11,12 +11,12 @@ import java.util.List;
 public class TransformData {
     public static void main(String[] args){
         try {
-            int fileLength = 1000000;
-            int seriesLength = 100;
+            int fileLength = 80000;
+            int seriesLength = 1000;
 
-            File wfile = new File("files/data/1000000d");
+            File wfile = new File("files/data/weather_series_d");
             FileOutputStream fos = new FileOutputStream(wfile);
-            TimeSeriesOperator timeSeriesOperator = new TimeSeriesFileOperator("files/data/1000000", fileLength, seriesLength, false);
+            TimeSeriesOperator timeSeriesOperator = new TimeSeriesFileOperator("files/data/weather_series", fileLength, seriesLength, false);
 
             for(int i = 0; i < fileLength / seriesLength; i++){
                 double ex = 0.0;
@@ -35,6 +35,7 @@ public class TransformData {
                 }
                 fos.write(((ts.get(ts.size() - 1)- ex) / ex2 + "\n").getBytes());
             }
+            fos.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
