@@ -3,6 +3,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 object CompCar {
   val timeInterval = 3 * 60
+  val threshold = 2
 
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf().setAppName("Accompany Car")
@@ -10,47 +11,73 @@ object CompCar {
     val sc = new SparkContext(conf)
     if (args.size != 1)
       printf("Usage: app [URI]\n")
-    val inputFile = "data/test.csv"
+    val inputFile = "data/test1.csv"
     val textFile = sc.textFile(inputFile, 200).cache()
-    val sp: Long = 1420056000 - 86400
+
     val res = textFile.map(line => {
       val Array(car_s, xr_s, ts_s) = line.split(",")
       val (car, xr, ts) = (car_s.toInt, xr_s.toInt, ts_s.toLong)
-      //val part = if (ts < sp) 0 else 1 + (ts - sp) / 86400
-      val part = ((ts - sp) / 86400).toInt
       val arr = new ArrayBuffer[(Int, Long)](1)
-      arr.append((car, ts))
-      ((part, xr), arr)
+      arr.append((xr, ts))
+      (car, arr)
     }).reduceByKey(_ ++ _, numPartitions = 200)
 
     res.flatMap(tup => {
-      val ((part, xr), arr) = tup
-      val ret = new ArrayBuffer[(Int, Int, Int)]
-      if (arr.size < 100000) {
-        val offset = (part * 86400).toLong + sp
-        val carList = new Array[ArrayBuffer[Int]](86400)
-        for (i <- 0 until 86400)
+      val (car, arr) = tup
+      val ab = new ArrayBuffer[(Int, ArrayBuffer[(Int, Long)])]
+      if(arr.length >= threshold){
+        for(i <- 0 to arr.length - 1){
+          val ca = new ArrayBuffer[(Int, Long)](1)
+          ca.append((car, arr(i)._2))
+          ab.append((arr(i)._1,ca))
+          //ab.append((arr(i)._1, car, arr(i)._2))
+        }
+      }
+      ab
+    }).reduceByKey(_ ++ _,numPartitions = 200)
+
+    res.flatMap(tup => {
+      val (xr, arr) = tup
+      //arr.sortBy(v => (v._2))
+      arr.toList.sortBy(v => v._2)
+      val arrs = arr.sortBy(v => (v._2))
+      val ret = new ArrayBuffer[(Int, Int)]
+
+      var i = 0;
+      var sti = 0;
+      var t = false
+      while(i < arrs.length){
+        var j = i;
+        val carList = new Array[ArrayBuffer[Int]](timeInterval * 2)
+        for (i <- 0 until timeInterval * 2)
           carList(i) = new ArrayBuffer[Int]
-        arr.foreach(v => {
-          val (car, ts) = v
-          carList((ts - offset).toInt).append(car)
-        })
-        arr.foreach(v => {
-          val (car, ts) = v
-          var start = (ts - offset).toInt
-          for (i <- start until start + timeInterval if i < 86400)
-            for (cary <- carList(i) if cary != car)
-              if (car < cary)
-                ret.append((part, car, cary))
-              else
-                ret.append((part, cary, car))
-        })
+        while((j < arrs.length) && (arrs(j)._2 - arrs(i)._2 < 2 * timeInterval)){
+          if(arrs(j)._2 - arrs(i)._2 > timeInterval && !t){
+            sti = j
+            t=true
+          }
+          carList((arrs(j)._2.toInt - arrs(i)._2.toInt) % (2 * timeInterval)).append(arrs(j)._1)
+          j += 1
+        }
+        for(x <- 0 to carList.length - 1){
+          for(y <- x to carList.length - 1){
+            for(xi <- 0 to carList(x).length - 1){
+              for(yi <- 0 to carList(y).length - 1){
+                if(carList(x)(xi) < carList(y)(yi)) ret.append((carList(x)(xi), carList(y)(yi)))
+                else if(carList(x)(xi) > carList(y)(yi)) ret.append((carList(y)(yi), carList(x)(xi)))
+              }
+            }
+          }
+        }
+        if(t)i = sti
+        else i = j
+        t = false
       }
       ret
     }).map(word => (word, 1))
       .reduceByKey(_ + _, numPartitions = 200)
-      .filter(v => v._2 >= 5)
-      .sortBy(v => (-v._2, v._1._1, v._1._2, v._1._3), numPartitions = 200)
+      .filter(v => v._2 >= threshold)
+      .sortBy(v => (-v._2, v._1._1, v._1._2), numPartitions = 200)
       .collect()
       .foreach(println)
   }
